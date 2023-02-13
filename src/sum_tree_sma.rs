@@ -1,23 +1,24 @@
 use super::{sum_tree::SumTree, SMA};
 use crate::{common::cast_to_divisor_type, ring_buffer::RingBuffer, Iter};
-use num_traits::{FromPrimitive, Zero};
-use std::{
+use core::{
 	marker::{self, PhantomData},
 	ops::{Add, Div},
 };
+use num_traits::{FromPrimitive, Zero};
 
 type SumTreeNodeIdx = usize;
 
 /// An SMA implementation that caches the sum of all samples currently in the sample window as a
 /// tree of sums.
-pub struct SumTreeSMA<Sample, Divisor, const WINDOW_SIZE: usize> {
+/// N must be sum_tree_size(WINDOW_SIZE)
+pub struct SumTreeSMA<Sample, Divisor, const WINDOW_SIZE: usize, const N: usize> {
 	samples: RingBuffer<SumTreeNodeIdx, WINDOW_SIZE>,
-	sum_tree: SumTree<Sample>,
+	sum_tree: SumTree<Sample, N>,
 	_marker: marker::PhantomData<Divisor>,
 }
 
-impl<Sample, Divisor, const WINDOW_SIZE: usize> SMA<Sample, Divisor, WINDOW_SIZE>
-	for SumTreeSMA<Sample, Divisor, WINDOW_SIZE>
+impl<Sample, Divisor, const WINDOW_SIZE: usize, const N: usize> SMA<Sample, Divisor, WINDOW_SIZE>
+	for SumTreeSMA<Sample, Divisor, WINDOW_SIZE, N>
 where
 	Sample: Copy + Add<Output = Sample> + Div<Divisor, Output = Sample>,
 	Divisor: FromPrimitive,
@@ -73,8 +74,8 @@ where
 	}
 }
 
-impl<Sample: Copy + Zero, Divisor, const WINDOW_SIZE: usize>
-	SumTreeSMA<Sample, Divisor, WINDOW_SIZE>
+impl<Sample: Copy + Zero, Divisor, const WINDOW_SIZE: usize, const N: usize>
+	SumTreeSMA<Sample, Divisor, WINDOW_SIZE, N>
 {
 	/// Constructs a new [SumTreeSMA] with window size `WINDOW_SIZE`. This constructor is
 	/// only available for `Sample` types that implement [num_traits::Zero]. If the `Sample` type
@@ -85,20 +86,22 @@ impl<Sample: Copy + Zero, Divisor, const WINDOW_SIZE: usize>
 	pub fn new() -> Self {
 		Self {
 			samples: RingBuffer::new(0),
-			sum_tree: SumTree::new(Sample::zero(), WINDOW_SIZE),
+			sum_tree: SumTree::new(Sample::zero()),
 			_marker: PhantomData,
 		}
 	}
 }
 
-impl<Sample: Copy, Divisor, const WINDOW_SIZE: usize> SumTreeSMA<Sample, Divisor, WINDOW_SIZE> {
+impl<Sample: Copy, Divisor, const WINDOW_SIZE: usize, const N: usize>
+	SumTreeSMA<Sample, Divisor, WINDOW_SIZE, N>
+{
 	/// Constructs a new [SumTreeSMA] with window size `WINDOW_SIZE` from the given
 	/// `zero` sample. If the `Sample` type implements [num_traits::Zero], the
 	/// [new](SumTreeSMA::new) constructor might be preferable to this.
 	pub fn from_zero(zero: Sample) -> Self {
 		Self {
 			samples: RingBuffer::new(0),
-			sum_tree: SumTree::new(zero, WINDOW_SIZE),
+			sum_tree: SumTree::new(zero),
 			_marker: PhantomData,
 		}
 	}

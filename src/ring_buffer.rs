@@ -62,6 +62,7 @@ impl<Item: Copy, const CAPACITY: usize> RingBuffer<Item, CAPACITY> {
 }
 
 #[cfg(test)]
+#[cfg(feature = "std")]
 mod tests {
 	use super::*;
 

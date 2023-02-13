@@ -19,7 +19,9 @@ many third party math library ([nalgebra](https://docs.rs/nalgebra/),
 *Scalars*
 ```
 # use simple_moving_average::{SMA, SumTreeSMA};
-let mut ma = SumTreeSMA::<_, f32, 2>::new(); // Sample window size = 2
+
+const N: usize = simple_moving_average::sum_tree_size(2);
+let mut ma = SumTreeSMA::<_, f32, 2, N>::new(); // Sample window size = 2
 ma.add_sample(1.0);
 ma.add_sample(2.0);
 ma.add_sample(3.0);
@@ -173,6 +175,9 @@ with [NoSumSMA].
 
 */
 
+
+#![cfg_attr(not(feature = "std"), no_std)]
+
 mod common;
 mod iterator;
 mod no_sum_sma;
@@ -188,17 +193,25 @@ pub use crate::single_sum_sma::SingleSumSMA;
 pub use crate::sma::SMA;
 pub use crate::sum_tree_sma::SumTreeSMA;
 
+pub const fn sum_tree_size(leafs: usize) -> usize {
+	match leafs.checked_next_power_of_two() {
+		Some(p) => p * 2,
+		None => 0
+	}
+}
 #[cfg(test)]
+#[cfg(feature = "std")]
 mod tests {
-	use crate::{NoSumSMA, SingleSumSMA, SumTreeSMA, SMA};
+	use crate::{NoSumSMA, SingleSumSMA, SumTreeSMA, SMA, sum_tree_size};
 
 	macro_rules! get_sma_impls {
 		(
 			$divisor_type:ty, $window_size:expr, $ctor:ident $(, $zero:expr)?
 		) => {{
+			const N: usize = $crate::sum_tree_size($window_size);
 			let ma_impls: [Box<dyn SMA<_, $divisor_type, $window_size>>; 3] = [
 				Box::new(SingleSumSMA::<_, _, $window_size>::$ctor($($zero ,)?)),
-				Box::new(SumTreeSMA::<_, _, $window_size>::$ctor($($zero ,)?)),
+				Box::new(SumTreeSMA::<_, _, $window_size, N>::$ctor($($zero ,)?)),
 				Box::new(NoSumSMA::<_, _, $window_size>::$ctor($($zero ,)?)),
 			];
 			ma_impls
@@ -455,8 +468,10 @@ mod tests {
 					.take(1000000)
 					.collect();
 
+
+				const N: usize = sum_tree_size(WINDOW_SIZE);
 				let mut single_sum_sma = SingleSumSMA::<_, f32, WINDOW_SIZE>::new();
-				let mut sum_tree_sma = SumTreeSMA::<_, f32, WINDOW_SIZE>::new();
+				let mut sum_tree_sma = SumTreeSMA::<_, f32, WINDOW_SIZE, N>::new();
 				let mut no_sum_sma = NoSumSMA::<_, f32, WINDOW_SIZE>::new();
 
 				VALUE_RANGES.map(|value_range| {

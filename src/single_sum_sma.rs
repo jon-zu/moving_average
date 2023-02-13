@@ -1,7 +1,7 @@
 use super::SMA;
 use crate::{common::cast_to_divisor_type, ring_buffer::RingBuffer, Iter};
 use num_traits::{FromPrimitive, Zero};
-use std::{
+use core::{
 	marker::{self, PhantomData},
 	ops::{AddAssign, Div, SubAssign},
 };

@@ -19,12 +19,19 @@ exclude = [
 	"/.vscode",
 ]
 
+[features]
+default = ["std"]
+# Defines a feature named `webp` that does not enable any other features.
+std = []
+
 [lib]
 name = "simple_moving_average"
 path = "src/lib.rs"
 
-[dependencies]
-num-traits = "0.2.14"
+[dependencies.num-traits]
+version = "0.2"
+default-features = false
+features = ["libm"] 
 
 [dev-dependencies]
 rand = { version = "0.8.4", features = ["small_rng"] }

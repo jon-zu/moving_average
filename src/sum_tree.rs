@@ -1,9 +1,10 @@
-use std::ops::Add;
+use core::ops::Add;
 
-pub struct SumTree<Sample> {
+/// N must be sum_tree_size(n), where n is the window size
+pub struct SumTree<Sample, const N: usize,> {
 	// TODO: Convert this to an array and use it as SumTreeSMA's main data storage, once
 	// https://github.com/rust-lang/rust/issues/76560 is stable
-	nodes: Vec<Sample>,
+	nodes: [Sample; N],
 }
 
 enum Position {
@@ -13,7 +14,7 @@ enum Position {
 
 const ROOT_NODE_IDX: usize = 1;
 
-impl<Sample> SumTree<Sample>
+impl<Sample, const N: usize> SumTree<Sample, N>
 where
 	Sample: Copy + Add<Output = Sample>,
 {
@@ -67,16 +68,16 @@ where
 	}
 }
 
-impl<Sample> SumTree<Sample>
+impl<Sample, const N: usize,> SumTree<Sample, N>
 where
 	Sample: Copy,
 {
-	pub fn new(zero: Sample, num_leaf_nodes: usize) -> Self {
+	pub fn new(zero: Sample) -> Self {
 		// Let's create a perfect binary tree, large enough to accomodate all leaf nodes.
 		// The extra nodes will contain only zeros, which is alright for our purposes.
-		let num_leaf_nodes = 2 * num_leaf_nodes.checked_next_power_of_two().unwrap();
+		//let num_leaf_nodes = 2 * num_leaf_nodes.checked_next_power_of_two().unwrap();
 		Self {
-			nodes: vec![zero; num_leaf_nodes],
+			nodes: [zero; N],
 		}
 	}
 }
@@ -107,7 +108,10 @@ mod tests {
 
 	#[test]
 	fn basics() {
-		let mut sum_tree = SumTree::new(0, 6);
+
+
+		const N: usize = crate::sum_tree_size(6);
+		let mut sum_tree = SumTree::<i32, N>::new(0);
 
 		// Insert new nodes
 
